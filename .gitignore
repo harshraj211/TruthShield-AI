@@ -1,0 +1,83 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+backend_server.log
+ml-backend*.log
+vite-dev*.log
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+kaggle.json
+.kaggle/
+
+# Supabase local state
+supabase/.branches
+supabase/.temp
+supabase/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# ML artifacts and checkpoints
+ML/**/*.pth
+ML/**/*.pt
+ML/**/*.bin
+ML/**/*.safetensors
+ML/**/training_args.bin
+ML/**/*.zip
+ML/**/checkpoint*/
+checkpoints/
+runs/
+wandb/
+lightning_logs/
+
+# Generated reports / exports
+*.pdf
+truthshield-*.json
+truthshield-*.html
+
+# Large local media inputs
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wav
+*.mp3
+*.webm
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
