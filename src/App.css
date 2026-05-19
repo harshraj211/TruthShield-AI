@@ -1,0 +1,11 @@
+/*
+  App-level CSS should stay minimal.
+  The layout is controlled via Tailwind + design tokens.
+*/
+
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
