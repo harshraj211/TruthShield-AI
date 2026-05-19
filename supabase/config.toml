@@ -1,0 +1,16 @@
+project_id = "xiwrvwbuifdqcurhpwxh"
+
+[functions.ensure-admin]
+verify_jwt = false
+
+[functions.manage-roles]
+verify_jwt = false
+
+[functions.detect]
+verify_jwt = false
+
+[functions.detect-audio]
+verify_jwt = false
+
+[functions.elevenlabs-transcribe]
+verify_jwt = false
