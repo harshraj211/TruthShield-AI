@@ -8,7 +8,8 @@ export type DetectResult = {
   recommended_next_steps: string[];
 };
 
-const localDetectorUrl = import.meta.env.VITE_IMAGE_DETECTOR_URL ?? "http://127.0.0.1:8010";
+const localDetectorUrl =
+  import.meta.env.VITE_IMAGE_DETECTOR_URL ?? "https://harshraj21-truthshield-ai-backend.hf.space";
 
 async function dataUrlToBlob(dataUrl: string) {
   const response = await fetch(dataUrl);
