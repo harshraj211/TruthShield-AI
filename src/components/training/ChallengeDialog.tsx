@@ -49,7 +49,7 @@ export default function ChallengeDialog({ challenge }: { challenge: ChallengeCon
           Start
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">{challenge.title}</DialogTitle>
         </DialogHeader>
