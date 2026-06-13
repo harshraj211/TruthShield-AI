@@ -15,6 +15,8 @@ from pydantic import BaseModel
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from torchvision import models, transforms
 
+from backend.image_evidence import image_watermark_analysis
+
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.getenv("TRUTHSHIELD_MODEL_PATH", ROOT_DIR / "ML" / "truthshield_aigc_efficientnet_b0_final.pth"))
@@ -108,12 +110,18 @@ def load_text_model() -> tuple[Any, Any]:
 text_tokenizer, text_model = load_text_model()
 
 
-def result_payload(fake_probability: float) -> dict[str, Any]:
+def result_payload(fake_probability: float, watermark_analysis: dict[str, Any] | None = None) -> dict[str, Any]:
   real_probability = 1.0 - fake_probability
   predicted_label = "fake" if fake_probability >= real_probability else "real"
   confidence = max(fake_probability, real_probability)
+  watermark_detected = bool(watermark_analysis and watermark_analysis.get("detected"))
 
-  if confidence < CONFIDENCE_THRESHOLD:
+  if watermark_detected:
+    verdict = "likely_manipulated"
+    impact = "high"
+    confidence = max(confidence, 0.92)
+    summary = "A visible AI-generator watermark was detected, so this image should be treated as AI-generated even if the classifier score is mixed."
+  elif confidence < CONFIDENCE_THRESHOLD:
     verdict = "uncertain"
     impact = "medium"
     summary = "The local AIGC image model found mixed visual evidence, so this image should be reviewed manually."
@@ -126,30 +134,47 @@ def result_payload(fake_probability: float) -> dict[str, Any]:
     impact = "low"
     summary = "The local AIGC image model classified this image as likely authentic."
 
+  signals = [
+    {
+      "label": "AIGC EfficientNet-B0 prediction",
+      "impact": impact,
+      "note": (
+        f"Class probabilities using order {CLASS_ORDER}: "
+        f"real={real_probability:.2%}, fake={fake_probability:.2%}."
+      ),
+    },
+    {
+      "label": "Local AIGC model inference",
+      "impact": "low",
+      "note": f"Model loaded from {MODEL_PATH.name} on {device.type.upper()} with {IMAGE_SIZE}x{IMAGE_SIZE} preprocessing.",
+    },
+  ]
+
+  if watermark_detected:
+    signals.insert(
+      0,
+      {
+        "label": "Visible generator watermark",
+        "impact": "high",
+        "note": "A Gemini-style sparkle watermark was found in the lower-right corner, which is direct evidence that the image was generated or exported by an AI tool.",
+      },
+    )
+
+  recommended_next_steps = [
+    "Use this model output as a screening signal, not final proof.",
+    "Check source, metadata, and reverse-image search results before escalation.",
+    "Treat screenshots, heavy compression, crops, and out-of-distribution images cautiously.",
+  ]
+
+  if watermark_detected:
+    recommended_next_steps.insert(0, "Preserve the original file because the visible generator watermark is the strongest evidence.")
+
   return {
     "verdict": verdict,
     "confidence": round(float(confidence), 4),
     "summary": summary,
-    "signals": [
-      {
-        "label": "AIGC EfficientNet-B0 prediction",
-        "impact": impact,
-        "note": (
-          f"Class probabilities using order {CLASS_ORDER}: "
-          f"real={real_probability:.2%}, fake={fake_probability:.2%}."
-        ),
-      },
-      {
-        "label": "Local AIGC model inference",
-        "impact": "low",
-        "note": f"Model loaded from {MODEL_PATH.name} on {device.type.upper()} with {IMAGE_SIZE}x{IMAGE_SIZE} preprocessing.",
-      },
-    ],
-    "recommended_next_steps": [
-      "Use this model output as a screening signal, not final proof.",
-      "Check source, metadata, and reverse-image search results before escalation.",
-      "Treat screenshots, heavy compression, crops, and out-of-distribution images cautiously.",
-    ],
+    "signals": signals,
+    "recommended_next_steps": recommended_next_steps,
     "metadata": {
       "model": "efficientnet_b0",
       "model_path": str(MODEL_PATH),
@@ -160,6 +185,7 @@ def result_payload(fake_probability: float) -> dict[str, Any]:
         "fake": round(float(fake_probability), 6),
       },
       "threshold": CONFIDENCE_THRESHOLD,
+      "watermark_analysis": watermark_analysis or {"detected": False, "matches": []},
     },
   }
 
@@ -350,6 +376,7 @@ async def predict_image(file: UploadFile = File(...)) -> dict[str, Any]:
   except UnidentifiedImageError as exc:
     raise HTTPException(status_code=400, detail="Could not read image file.") from exc
 
+  watermark_analysis = image_watermark_analysis(image)
   tensor = preprocess(image).unsqueeze(0).to(device)
 
   with torch.inference_mode():
@@ -357,7 +384,7 @@ async def predict_image(file: UploadFile = File(...)) -> dict[str, Any]:
     probabilities = torch.softmax(logits, dim=1).squeeze(0).detach().cpu().tolist()
 
   probability_by_class = {CLASS_ORDER[index]: float(probabilities[index]) for index in range(2)}
-  return result_payload(fake_probability=probability_by_class["fake"])
+  return result_payload(fake_probability=probability_by_class["fake"], watermark_analysis=watermark_analysis)
 
 
 @app.post("/predict-text")
