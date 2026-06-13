@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-[transform,box-shadow,background-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:translate-y-px",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-[box-shadow,background-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -18,9 +18,9 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         hero:
-          "border border-border bg-foreground/10 text-foreground shadow-soft hover:bg-foreground/15 hover:shadow-soft dark:border-border/70 dark:bg-secondary/70 dark:bg-hero dark:hover:shadow-glow dark:hover:bg-secondary/70 dark:hover:-translate-y-0.5 focus-visible:ring-primary/30",
+          "border border-border bg-foreground/10 text-foreground shadow-soft hover:bg-foreground/15 hover:shadow-soft dark:border-border/70 dark:bg-secondary/70 dark:bg-hero dark:hover:shadow-glow dark:hover:bg-secondary/70 focus-visible:ring-primary/30",
         glow:
-          "border border-border bg-foreground/10 text-foreground shadow-soft hover:bg-foreground/15 dark:bg-muted dark:hover:bg-muted/80 dark:hover:shadow-glow dark:hover:-translate-y-0.5",
+          "border border-border bg-foreground/10 text-foreground shadow-soft hover:bg-foreground/15 dark:bg-muted dark:hover:bg-muted/80 dark:hover:shadow-glow",
       },
       size: {
         default: "h-10 px-4 py-2",

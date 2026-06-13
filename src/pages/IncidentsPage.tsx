@@ -100,7 +100,7 @@ export default function IncidentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="glass-panel-strong animated-border fade-up rounded-xl p-6 md:p-8">
+      <div className="glass-panel-strong fade-up rounded-xl p-6 md:p-8">
         <div className="eyebrow">
           <Database className="h-3.5 w-3.5 text-primary" />
           Intelligence library
@@ -124,7 +124,7 @@ export default function IncidentsPage() {
         </TabsList>
 
         <TabsContent value="incidents" className="space-y-6">
-          <div className="glass-panel scan-grid rounded-xl p-6">
+          <div className="glass-panel rounded-xl p-6">
             <h2 className="font-display text-lg mb-4">Filter Incidents</h2>
             <p className="text-xs text-muted-foreground mb-4">
               Refine the list of incidents based on attack type, target, or year.

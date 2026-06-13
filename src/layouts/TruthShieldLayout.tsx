@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { Activity, ShieldCheck } from "lucide-react";
+import { Activity } from "lucide-react";
+import { TruthShieldLogo } from "@/components/TruthShieldLogo";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -15,30 +16,15 @@ export default function TruthShieldLayout() {
   const location = useLocation();
 
   return (
-    <div
-      className="relative min-h-screen overflow-x-hidden"
-      onPointerMove={(e) => {
-        const target = e.currentTarget;
-        const rect = target.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        target.style.setProperty("--spot-x", `${x.toFixed(2)}%`);
-        target.style.setProperty("--spot-y", `${y.toFixed(2)}%`);
-      }}
-    >
-      <div className="ts-grid-bg ts-spotlight ts-noise fixed inset-0 -z-10 pointer-events-none" />
-      <div className="aurora-field" />
-      <div className="cinema-vignette fixed inset-0 -z-10 pointer-events-none" />
-      <div
-        className="pointer-events-none fixed inset-0 opacity-45 motion-safe:animate-grid-drift"
-        style={{ backgroundImage: "var(--pattern-grid)", backgroundSize: "64px 64px" }}
-      />
+    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      {/* Subtle top ambient light glow for dark mode */}
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_60%_50%_at_50%_-20%,rgba(16,185,129,0.06),transparent_70%)]" />
 
-      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/62 backdrop-blur-2xl">
+      <header className="sticky top-0 z-40 border-b border-border/30 bg-background/75 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 md:px-6">
           <NavLink to="/" className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-primary/20 bg-primary/10 shadow-glow">
-              <ShieldCheck className="h-5 w-5 text-primary" />
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
+              <TruthShieldLogo className="h-5 w-5 text-primary" />
             </span>
             <span className="leading-tight">
               <span className="block font-display text-base font-semibold">TruthShield AI</span>
@@ -57,7 +43,7 @@ export default function TruthShieldLayout() {
                     to={item.to}
                     end={item.to === "/"}
                     className="rounded-full px-4 py-2 text-sm text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground"
-                    activeClassName="bg-foreground/10 text-foreground shadow-soft"
+                    activeClassName="bg-foreground/5 text-foreground"
                   >
                     {item.label}
                   </NavLink>
@@ -67,12 +53,12 @@ export default function TruthShieldLayout() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-2 rounded-full border border-border/70 bg-card/45 px-3 py-2 text-xs text-muted-foreground lg:flex">
+            <div className="hidden items-center gap-2 rounded-full border border-border/30 bg-card/20 px-3 py-2 text-xs text-muted-foreground lg:flex">
               <Activity className="h-3.5 w-3.5 text-primary" />
               Live Ops
             </div>
             <ThemeToggle />
-            <Button asChild variant="hero" className="h-10 rounded-full px-5">
+            <Button asChild variant="default" className="h-10 rounded-full px-5 font-medium">
               <NavLink to="/detection">Start Detection</NavLink>
             </Button>
           </div>
@@ -100,13 +86,13 @@ export default function TruthShieldLayout() {
           <span className="uppercase tracking-[0.22em]">
             Console / {location.pathname === "/" ? "overview" : location.pathname.replace("/", "")}
           </span>
-          <span className="hidden sm:inline">Evidence-led review, not blind automation</span>
+          <span className="hidden sm:inline">v1.0 · Local inference</span>
         </div>
         <Outlet />
       </main>
 
       <footer className="relative mx-auto mt-2 hidden w-full max-w-7xl border-t border-border/50 px-6 py-6 text-sm text-muted-foreground md:block">
-        (c) {new Date().getFullYear()} TruthShield AI. Built for measured verification workflows.
+        © {new Date().getFullYear()} TruthShield AI. Built for measured verification workflows.
       </footer>
     </div>
   );

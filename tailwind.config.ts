@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Space Grotesk", "ui-sans-serif", "system-ui"],
-        sans: ["IBM Plex Sans", "ui-sans-serif", "system-ui"],
+        display: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui"],
+        sans: ["Inter", "ui-sans-serif", "system-ui"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -64,7 +64,6 @@ export default {
       },
       backgroundImage: {
         hero: "var(--gradient-hero)",
-        grid: "var(--pattern-grid)",
       },
       boxShadow: {
         soft: "var(--shadow-soft)",
@@ -85,10 +84,6 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "grid-drift": {
-          from: { transform: "translate3d(0,0,0)" },
-          to: { transform: "translate3d(-64px,-64px,0)" },
-        },
         "shine": {
           from: { transform: "translateX(-30%)" },
           to: { transform: "translateX(130%)" },
@@ -97,7 +92,6 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "grid-drift": "grid-drift 18s linear infinite",
         shine: "shine 1.4s ease-in-out",
       },
     },
