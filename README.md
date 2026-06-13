@@ -9,7 +9,6 @@ The system is designed as a major-project style prototype: it does not claim per
 - Image AIGC detection using a locally trained EfficientNet-B0 model.
 - Text AI-generation detection using a locally trained RoBERTa model.
 - Hybrid text scoring that blends ML probability with writing-pattern signals.
-- Audio workflow with transcription and suspicious-segment analysis hooks.
 - Downloadable JSON, HTML, and PDF-style reports.
 - Training result visuals for the image and text models.
 - Incident library and training modules for awareness/education.
@@ -61,6 +60,7 @@ Note: model weights are intentionally ignored by `.gitignore` because they are l
 
 - Architecture: EfficientNet-B0
 - Task: real image vs AI-generated image
+- Reported validation accuracy: 92.8%
 - Default model path:
 
 ```txt
@@ -78,6 +78,7 @@ real,fake
 - Architecture: RoBERTa base
 - Dataset family: M4 machine-generated text detection dataset
 - Task: human-written text vs AI-generated text
+- Reported validation F1: 96.9%
 - Default model path:
 
 ```txt

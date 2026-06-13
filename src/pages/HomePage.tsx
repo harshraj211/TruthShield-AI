@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
-import { Activity, ArrowUpRight, Fingerprint, Gauge, Layers, Radar, ShieldCheck, Sparkles, Timer, Upload } from "lucide-react";
+import { Activity, ArrowUpRight, Fingerprint, Gauge, Image as ImageIcon, Layers, ShieldCheck, Sparkles, Timer, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 import trainingPlot from "../../ML/training_ai_detector.png";
@@ -39,7 +39,7 @@ export default function HomePage() {
   }, [metrics]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="glass-panel-strong fade-up overflow-hidden rounded-xl p-6 md:p-8">
           <div className="eyebrow">
@@ -52,7 +52,7 @@ export default function HomePage() {
           </h1>
 
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-            TruthShield turns AI-generated image checks, audio review, and text scans into clear evidence, confidence, and next steps for human review.
+            TruthShield turns AI-generated image checks and text scans into clear evidence, confidence, and next steps for human review.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -70,39 +70,30 @@ export default function HomePage() {
 
           <div className="mt-9 grid gap-3 sm:grid-cols-3">
             <MiniSignal label="Signals" value="Evidence-led" />
-            <MiniSignal label="Modes" value="Image / Audio / Text" />
+            <MiniSignal label="Modes" value="Image / Text" />
             <MiniSignal label="Output" value="Downloadable report" />
           </div>
         </div>
 
-        <div className="dashboard-visual glass-panel animated-border fade-up-delay-1 rounded-xl p-5">
-          <div className="scan-beam" />
+        <div className="dashboard-visual glass-panel fade-up-delay-1 rounded-xl p-5">
           <div className="relative z-10 flex h-full flex-col justify-between">
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Threat view</div>
-                <div className="mt-2 font-display text-2xl">Signal Integrity Matrix</div>
+                <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Model view</div>
+                <div className="mt-2 font-display text-2xl">Detector Performance</div>
               </div>
-              <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">Live</div>
+              <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">Local</div>
             </div>
 
-            <div className="subtle-float pulse-glow relative mx-auto grid h-64 w-64 place-items-center rounded-full border border-primary/15 bg-background/30 shadow-glow">
-              <div className="radar-sweep" />
-              <div className="orbit-ring">
-                <span className="orbit-dot" />
-              </div>
-              <div className="orbit-ring">
-                <span className="orbit-dot" />
-              </div>
-              <div className="relative z-10 grid h-40 w-40 place-items-center rounded-full border border-accent/25 bg-card/55 backdrop-blur-xl">
-                <Radar className="h-16 w-16 text-primary" />
-              </div>
+            <div className="my-8 grid gap-3">
+              <ModelScore icon={ImageIcon} title="AIGC Image" model="EfficientNet-B0" metric="92.8%" label="validation accuracy" />
+              <ModelScore icon={Sparkles} title="AI Text" model="RoBERTa M4 Hybrid" metric="96.9%" label="validation F1" />
             </div>
 
             <div className="grid gap-3">
-              <SignalRow label="Provenance" value="74" tone="primary" />
-            <SignalRow label="AIGC image risk" value="28" tone="accent" />
-              <SignalRow label="Review priority" value="41" tone="rose" />
+              <SignalRow label="Image validation" value="93" tone="primary" />
+              <SignalRow label="Text validation" value="97" tone="accent" />
+              <SignalRow label="Human review layer" value="100" tone="rose" />
             </div>
           </div>
         </div>
@@ -111,18 +102,8 @@ export default function HomePage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={Activity} label="Last confidence" value={lastConfidence} note={metrics?.count ? "from latest scan" : "run a scan"} />
         <StatCard icon={Timer} label="Avg analysis time" value={avgTime} note={metrics?.count ? `across ${metrics.count} scans` : "run a scan"} />
-        <StatCard icon={Layers} label="Media types" value="3" note="text, image, audio" />
+        <StatCard icon={Layers} label="Detection types" value="2" note="image and text" />
         <StatCard icon={Gauge} label="Review posture" value="Human" note="probabilistic signals" />
-      </section>
-
-      <section className="glass-panel overflow-hidden rounded-xl py-3">
-        <div className="ticker-track gap-3 px-3">
-          {[...tickerItems, ...tickerItems].map((item, idx) => (
-            <div key={`${item}-${idx}`} className="rounded-full border bg-background/30 px-4 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              {item}
-            </div>
-          ))}
-        </div>
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
@@ -131,20 +112,20 @@ export default function HomePage() {
           <p className="mt-2 text-sm text-muted-foreground">A compact verification loop designed for repeated analyst work.</p>
 
           <ol className="mt-6 space-y-3">
-            <Step n={1} title="Submit" desc="Upload image/audio or paste text." />
-            <Step n={2} title="Inspect" desc="Review confidence, signals, and segments." />
+            <Step n={1} title="Submit" desc="Upload an image or paste text." />
+            <Step n={2} title="Inspect" desc="Review model confidence, training metric, and signals." />
             <Step n={3} title="Escalate" desc="Download the report and verify sources." />
           </ol>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <Feature icon={Fingerprint} title="AIGC Image Analysis" desc="Local EfficientNet-B0 model trained to separate real and AI-generated images." />
-          <Feature icon={Sparkles} title="RoBERTa Text Analysis" desc="Local M4-trained model for human-written versus AI-generated text." />
-          <Feature icon={ShieldCheck} title="Audio Verification" desc="Transcript plus suspicious segment analysis." />
+          <Feature icon={Fingerprint} title="AIGC Image Analysis" desc="EfficientNet-B0 classifier with 92.8% validation accuracy on the image training run." />
+          <Feature icon={Sparkles} title="RoBERTa Text Analysis" desc="M4-trained RoBERTa hybrid with 96.9% validation F1 for AI-text risk scoring." />
+          <Feature icon={ShieldCheck} title="Report-Ready Review" desc="Every scan produces confidence, evidence signals, and exportable analyst notes." />
         </div>
       </section>
 
-      <section className="glass-panel-strong animated-border overflow-hidden rounded-xl p-5 md:p-6">
+      <section className="glass-panel-strong overflow-hidden rounded-xl p-5 md:p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="eyebrow">
@@ -179,9 +160,43 @@ export default function HomePage() {
 
 function MiniSignal({ label, value }: { label: string; value: string }) {
   return (
-    <div className="surface-card data-chip rounded-lg p-3">
+    <div className="surface-card rounded-lg p-3">
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+function ModelScore({
+  icon: Icon,
+  title,
+  model,
+  metric,
+  label,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  title: string;
+  model: string;
+  metric: string;
+  label: string;
+}) {
+  return (
+    <div className="surface-card rounded-xl p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="inline-flex h-10 w-10 items-center justify-center rounded-md border bg-primary/10 text-primary">
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="font-display text-lg">{title}</div>
+            <div className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">{model}</div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="font-display text-2xl">{metric}</div>
+          <div className="mt-1 text-xs text-muted-foreground">{label}</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -225,15 +240,6 @@ function StatCard({
   );
 }
 
-const tickerItems = [
-  "Synthetic signal review",
-  "Provenance scoring",
-  "Report export",
-  "Audio transcript scan",
-  "Human verification loop",
-  "Image artifact analysis",
-];
-
 function Step({ n, title, desc }: { n: number; title: string; desc: string }) {
   return (
     <li className="surface-card rounded-lg p-4">
@@ -266,7 +272,6 @@ function Feature({
       </div>
       <div className="mt-5 font-display text-lg">{title}</div>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{desc}</p>
-      <div className="mt-5 signal-line" />
     </div>
   );
 }

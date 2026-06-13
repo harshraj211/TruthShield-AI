@@ -1,5 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
-
 export type DetectMode = "text" | "image";
 
 export type DetectResult = {
@@ -9,27 +7,6 @@ export type DetectResult = {
   signals: Array<{ label: string; impact: "low" | "medium" | "high"; note: string }>;
   recommended_next_steps: string[];
 };
-
-export type SuspiciousSegment = {
-  start_sec: number;
-  end_sec: number;
-  severity: "low" | "medium" | "high";
-  summary: string;
-  evidence: string[];
-  frame_indices: number[];
-};
-
-export type SegmentDetectResult = {
-  verdict: DetectResult["verdict"];
-  confidence: number;
-  summary: string;
-  segments: SuspiciousSegment[];
-  transcript_summary?: string;
-  recommended_next_steps: string[];
-};
-
-export type TranscriptWord = { text: string; start: number; end: number; speaker?: string };
-export type AudioEvent = { type: string; start: number; end: number };
 
 const localDetectorUrl = import.meta.env.VITE_IMAGE_DETECTOR_URL ?? "http://127.0.0.1:8010";
 
@@ -97,16 +74,4 @@ export async function detectContent(input: { mode: DetectMode; text?: string; im
 
   if (!input.text?.trim()) throw new Error("Missing text.");
   return detectTextWithLocalModel(input.text);
-}
-
-export async function detectAudio(input: {
-  durationSec: number;
-  transcript: { text: string; words?: TranscriptWord[]; audio_events?: AudioEvent[] };
-}) {
-  const { data, error } = await supabase.functions.invoke("detect-audio", {
-    body: input,
-  });
-
-  if (error) throw error;
-  return data as SegmentDetectResult;
 }

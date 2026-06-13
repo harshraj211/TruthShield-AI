@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
-import { AudioLines, BookOpen, CheckCircle2, Image as ImageIcon, Sparkles, Swords, Video } from "lucide-react";
+import { BookOpen, CheckCircle2, Image as ImageIcon, Sparkles, Swords } from "lucide-react";
 import LessonDialog, { type LessonContent, useTrainingProgress } from "@/components/training/LessonDialog";
 import ChallengeDialog, { type ChallengeContent, type ChallengeType } from "@/components/training/ChallengeDialog";
 import { builtInChallenges, builtInLessons } from "@/lib/trainingSeed";
@@ -14,9 +14,7 @@ const db = supabase as any;
 
 function challengeIcon(t: ChallengeType) {
   if (t === "text") return <Sparkles className="h-5 w-5 text-accent" />;
-  if (t === "image") return <ImageIcon className="h-5 w-5 text-accent" />;
-  if (t === "audio") return <AudioLines className="h-5 w-5 text-accent" />;
-  return <Video className="h-5 w-5 text-accent" />;
+  return <ImageIcon className="h-5 w-5 text-accent" />;
 }
 
 function difficultyBadge(d: LessonContent["difficulty"]) {
@@ -67,7 +65,10 @@ export default function TrainingPage() {
       | Array<{ id: string; title: string; minutes: number; difficulty: string; content: any }>
       | null;
 
-    const source = rows ?? builtInLessons;
+    const source = (rows ?? builtInLessons).filter((lesson: any) => {
+      const title = String(lesson.title ?? "").toLowerCase();
+      return !title.includes("audio") && !title.includes("video");
+    });
 
     return source.map((l: any) => {
       const diff = typeof l.difficulty === "string" ? l.difficulty : "Beginner";
@@ -99,7 +100,7 @@ export default function TrainingPage() {
         }>
       | null;
 
-    const source = rows ?? builtInChallenges;
+    const source = (rows ?? builtInChallenges).filter((challenge: any) => challenge.type === "text" || challenge.type === "image");
 
     return source.map((c: any) => ({
       id: String(c.id),
@@ -119,7 +120,7 @@ export default function TrainingPage() {
   return (
     <div className="space-y-6">
       <section className="mx-auto">
-        <div className="glass-panel-strong animated-border fade-up rounded-xl p-6 text-center md:p-8">
+        <div className="glass-panel-strong fade-up rounded-xl p-6 text-center md:p-8">
           <div className="eyebrow mx-auto">
             <BookOpen className="h-3.5 w-3.5 text-primary" />
             Training simulator
@@ -139,7 +140,7 @@ export default function TrainingPage() {
           </div>
         </div>
 
-        <div className="glass-panel-strong animated-border mx-auto mt-8 max-w-5xl rounded-xl p-6">
+        <div className="glass-panel-strong mx-auto mt-8 max-w-5xl rounded-xl p-6">
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
             <div className="flex justify-center">
               <TabsList className="grid w-full max-w-sm grid-cols-2">

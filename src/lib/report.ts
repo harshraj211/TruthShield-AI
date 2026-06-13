@@ -1,4 +1,4 @@
-export type ReportMode = "text" | "image" | "audio";
+export type ReportMode = "text" | "image";
 
 export type ReportPayload = {
   app: "TruthShield";
@@ -18,7 +18,6 @@ export type ReportPayload = {
   transcript?: {
     text: string;
     words_count?: number;
-    audio_events_count?: number;
   };
   result: unknown;
 };

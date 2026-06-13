@@ -2,14 +2,13 @@ import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { detectAudio, detectContent, type DetectResult, type SegmentDetectResult, type SuspiciousSegment } from "@/lib/detect";
-import { transcribeAudio, type TranscriptionResult } from "@/lib/transcribe";
+import { detectContent, type DetectResult } from "@/lib/detect";
 import { ReportDownloads } from "@/components/ReportDownloads";
 import type { ReportPayload } from "@/lib/report";
 import { toast } from "sonner";
-import { Activity, AudioLines, FileSearch, Image as ImageIcon, ShieldCheck, Sparkles, Upload } from "lucide-react";
+import { FileSearch, Gauge, Image as ImageIcon, ShieldCheck, Sparkles, Upload } from "lucide-react";
 
-type DetectionTab = "image" | "audio" | "text";
+type DetectionTab = "image" | "text";
 
 type ScanMetrics = {
   count: number;
@@ -22,13 +21,6 @@ type ScanMetrics = {
 
 function clamp01(n: number) {
   return Math.max(0, Math.min(1, n));
-}
-
-function formatTime(sec: number) {
-  const s = Math.max(0, Math.floor(sec));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, "0")}`;
 }
 
 function metricsKey() {
@@ -86,8 +78,35 @@ function verdictLabel(verdict: DetectResult["verdict"]) {
   return "Uncertain";
 }
 
-function ResultBlock({ result, report }: { result: DetectResult; report?: ReportPayload }) {
+const detectorStats: Record<
+  DetectionTab,
+  {
+    label: string;
+    model: string;
+    metricLabel: string;
+    metric: string;
+    note: string;
+  }
+> = {
+  image: {
+    label: "AIGC Image",
+    model: "EfficientNet-B0",
+    metricLabel: "Validation accuracy",
+    metric: "92.8%",
+    note: "Real vs AI-generated image classifier trained for local inference.",
+  },
+  text: {
+    label: "AI Text",
+    model: "RoBERTa M4 Hybrid",
+    metricLabel: "Validation F1",
+    metric: "96.9%",
+    note: "RoBERTa probability calibrated with writing-pattern signals.",
+  },
+};
+
+function ResultBlock({ result, report, mode }: { result: DetectResult; report?: ReportPayload; mode: DetectionTab }) {
   const confidencePct = Math.round(clamp01(result.confidence) * 100);
+  const detector = detectorStats[mode];
 
   return (
     <div className="mt-6 glass-panel rounded-lg p-5">
@@ -106,10 +125,22 @@ function ResultBlock({ result, report }: { result: DetectResult; report?: Report
           ) : null}
         </div>
 
-        <div className="shrink-0 rounded-md border bg-secondary/40 px-3 py-2 text-right">
-          <div className="text-xs text-muted-foreground">Confidence</div>
-          <div className="font-display text-xl">{confidencePct}%</div>
+        <div className="grid shrink-0 gap-2 sm:grid-cols-2">
+          <div className="rounded-md border bg-secondary/40 px-3 py-2 text-right">
+            <div className="text-xs text-muted-foreground">Confidence</div>
+            <div className="font-display text-xl">{confidencePct}%</div>
+          </div>
+          <div className="rounded-md border bg-secondary/40 px-3 py-2 text-right">
+            <div className="text-xs text-muted-foreground">{detector.metricLabel}</div>
+            <div className="font-display text-xl">{detector.metric}</div>
+          </div>
         </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 rounded-md border bg-background/20 p-3 sm:grid-cols-3">
+        <MetricPill label="Detection type" value={detector.label} />
+        <MetricPill label="Model" value={detector.model} />
+        <MetricPill label="Training metric" value={`${detector.metric} ${detector.metricLabel.toLowerCase()}`} />
       </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
@@ -138,65 +169,41 @@ function ResultBlock({ result, report }: { result: DetectResult; report?: Report
   );
 }
 
-function SegmentTimeline({ durationSec, segments }: { durationSec: number; segments: SuspiciousSegment[] }) {
-  const widthBase = Math.max(1, durationSec);
+function MetricPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+      <div className="mt-1 text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+function ModeCard({ mode, active, onClick }: { mode: DetectionTab; active: boolean; onClick: () => void }) {
+  const detector = detectorStats[mode];
+  const Icon = mode === "image" ? ImageIcon : Sparkles;
 
   return (
-    <div className="mt-6 rounded-xl border bg-background/15 p-4">
-      <div className="flex items-center justify-between">
-        <div className="font-display text-sm">Suspicious timeline</div>
-        <div className="text-xs text-muted-foreground">{formatTime(durationSec)}</div>
-      </div>
-
-      <div className="mt-3 h-3 w-full overflow-hidden rounded-full border bg-card/30">
-        <div className="relative h-full w-full">
-          {segments.map((segment, idx) => {
-            const left = (Math.max(0, segment.start_sec) / widthBase) * 100;
-            const segmentWidth =
-              ((Math.max(segment.end_sec, segment.start_sec + 0.1) - Math.max(0, segment.start_sec)) / widthBase) * 100;
-            const severityClass =
-              segment.severity === "high" ? "bg-destructive" : segment.severity === "medium" ? "bg-accent" : "bg-secondary";
-
-            return (
-              <div
-                key={`${segment.start_sec}-${idx}`}
-                className={`absolute top-0 h-full ${severityClass}`}
-                style={{ left: `${left}%`, width: `${Math.max(1, segmentWidth)}%` }}
-                title={`${formatTime(segment.start_sec)} - ${formatTime(segment.end_sec)} - ${segment.severity}`}
-              />
-            );
-          })}
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group rounded-xl border p-4 text-left shadow-soft transition hover:border-primary/35 hover:bg-card/50 ${
+        active ? "border-primary/45 bg-primary/10" : "border-border/70 bg-card/35"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="inline-flex h-10 w-10 items-center justify-center rounded-md border bg-background/35 text-primary">
+          <Icon className="h-5 w-5" />
         </div>
+        <div className="rounded-full border bg-background/30 px-2.5 py-1 text-xs text-primary">{detector.metric}</div>
       </div>
-
-      <div className="mt-4 grid gap-3">
-        {segments.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No segments flagged. This can still be uncertain.</div>
-        ) : (
-          segments.map((segment, idx) => (
-            <div key={`${segment.summary}-${idx}`} className="rounded-lg border bg-card/30 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="font-medium">
-                    {formatTime(segment.start_sec)} - {formatTime(segment.end_sec)}
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">{segment.summary}</div>
-                </div>
-                <div className="rounded-md border bg-background/20 px-2 py-1 text-xs text-muted-foreground">{segment.severity}</div>
-              </div>
-
-              {segment.evidence?.length ? (
-                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                  {segment.evidence.slice(0, 5).map((item, itemIdx) => (
-                    <li key={`${item}-${itemIdx}`}>{item}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          ))
-        )}
+      <div className="mt-4 font-display text-lg">{detector.label}</div>
+      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">{detector.model}</p>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">{detector.note}</p>
+      <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+        <Gauge className="h-3.5 w-3.5 text-primary" />
+        {detector.metricLabel}
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -207,28 +214,18 @@ export default function DetectionPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
-  const [audioDurationSec, setAudioDurationSec] = useState(0);
-
-  const [transcript, setTranscript] = useState<TranscriptionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [progressText, setProgressText] = useState<string | null>(null);
 
   const [result, setResult] = useState<DetectResult | null>(null);
-  const [audioResult, setAudioResult] = useState<SegmentDetectResult | null>(null);
 
   const canScan = useMemo(() => {
     if (tab === "text") return text.trim().length > 0;
     if (tab === "image") return !!imageFile;
-    if (tab === "audio") return !!audioFile;
     return false;
-  }, [audioFile, imageFile, tab, text]);
+  }, [imageFile, tab, text]);
 
   const resetResults = () => {
     setResult(null);
-    setAudioResult(null);
-    setTranscript(null);
   };
 
   const onPickImage = async (file: File | null) => {
@@ -247,83 +244,13 @@ export default function DetectionPage() {
     }
   };
 
-  const onPickAudio = (file: File | null) => {
-    resetResults();
-
-    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
-
-    setAudioFile(file);
-    setAudioDurationSec(0);
-
-    if (!file) {
-      setAudioPreviewUrl(null);
-      return;
-    }
-
-    setAudioPreviewUrl(URL.createObjectURL(file));
-  };
-
-  const getAudioDurationSeconds = async (file: File) => {
-    const url = URL.createObjectURL(file);
-    const el = document.createElement("audio");
-    el.preload = "metadata";
-    el.src = url;
-
-    try {
-      const duration = await new Promise<number>((resolve, reject) => {
-        const timer = window.setTimeout(() => reject(new Error("Timed out reading audio metadata.")), 15000);
-        el.onloadedmetadata = () => {
-          window.clearTimeout(timer);
-          resolve(Number(el.duration));
-        };
-        el.onerror = () => {
-          window.clearTimeout(timer);
-          reject(new Error("Failed to read audio metadata."));
-        };
-      });
-
-      if (!Number.isFinite(duration) || duration <= 0) throw new Error("Invalid audio duration.");
-      return duration;
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  };
-
   const scan = async () => {
     setIsLoading(true);
-    setProgressText(null);
     resetResults();
 
     const startedAt = performance.now();
 
     try {
-      if (tab === "audio") {
-        if (!audioFile) throw new Error("Please pick an audio file first.");
-
-        setProgressText("Reading audio...");
-        const durationSec = audioDurationSec || (await getAudioDurationSeconds(audioFile));
-        setAudioDurationSec(durationSec);
-
-        setProgressText("Transcribing audio...");
-        const tx = await transcribeAudio(audioFile, audioFile.name);
-        setTranscript(tx);
-
-        setProgressText("Analyzing transcript...");
-        const data = await detectAudio({
-          durationSec,
-          transcript: {
-            text: tx.text,
-            words: tx.words,
-            audio_events: tx.audio_events,
-          },
-        });
-
-        setAudioResult(data);
-        setProgressText(null);
-        updateMetrics({ ms: performance.now() - startedAt, confidencePct: clamp01(data.confidence) * 100, mode: "audio" });
-        return;
-      }
-
       if (tab === "text") {
         const data = await detectContent({ mode: "text", text });
         setResult(data);
@@ -356,27 +283,29 @@ export default function DetectionPage() {
             </div>
             <h1 className="mt-4 font-display text-3xl font-semibold tracking-normal md:text-5xl">Authenticity scan console</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
-              Analyze images, text, and audio with local model evidence, calibrated confidence, and report-ready signals.
+              Analyze images and text with local model evidence, calibrated confidence, and report-ready signals.
             </p>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3 lg:w-[27rem]">
             <StatusChip label="Status" value={isLoading ? "Scanning" : "Ready"} active={isLoading} />
             <StatusChip label="Active mode" value={tab[0].toUpperCase() + tab.slice(1)} />
-            <StatusChip label="Models" value="Local" />
+            <StatusChip label="Modes" value="2 detectors" />
           </div>
         </div>
       </section>
 
+      <section className="grid gap-3 md:grid-cols-2">
+        <ModeCard mode="image" active={tab === "image"} onClick={() => setTab("image")} />
+        <ModeCard mode="text" active={tab === "text"} onClick={() => setTab("text")} />
+      </section>
+
       <section>
-        <div className="glass-panel-strong animated-border mx-auto max-w-7xl rounded-xl p-3 shadow-glow md:p-4">
+        <div className="glass-panel-strong mx-auto max-w-7xl rounded-xl p-3 shadow-glow md:p-4">
           <Tabs value={tab} onValueChange={(value) => setTab(value as DetectionTab)}>
-            <TabsList className="grid h-12 w-full grid-cols-3 rounded-lg border border-border/70 bg-background/35 p-1">
+            <TabsList className="grid h-12 w-full grid-cols-2 rounded-lg border border-border/70 bg-background/35 p-1">
               <TabsTrigger value="image" className="h-10 gap-2 rounded-md data-[state=active]:bg-primary/12 data-[state=active]:text-foreground">
                 <ImageIcon className="h-4 w-4" /> Image
-              </TabsTrigger>
-              <TabsTrigger value="audio" className="h-10 gap-2 rounded-md data-[state=active]:bg-primary/12 data-[state=active]:text-foreground">
-                <AudioLines className="h-4 w-4" /> Audio
               </TabsTrigger>
               <TabsTrigger value="text" className="h-10 gap-2 rounded-md data-[state=active]:bg-primary/12 data-[state=active]:text-foreground">
                 <Sparkles className="h-4 w-4" /> Text
@@ -390,9 +319,9 @@ export default function DetectionPage() {
                   desc="Upload an image file (JPG/PNG/WebP) to classify it as real or AI-generated using your trained EfficientNet-B0 model."
                 />
 
-                <label className="scan-grid mt-4 group relative flex min-h-[17rem] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-dashed bg-background/30 p-6 text-center shadow-soft transition hover:border-primary/30 hover:bg-background/45">
+                <label className="mt-4 group relative flex min-h-[17rem] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-dashed bg-background/30 p-6 text-center shadow-soft transition hover:border-primary/30 hover:bg-background/45">
                   <input type="file" accept="image/*" className="sr-only" onChange={(e) => onPickImage(e.target.files?.[0] ?? null)} />
-                  <div className="pulse-glow inline-flex h-12 w-12 items-center justify-center rounded-md border bg-card/40 shadow-soft group-hover:shadow-glow">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-md border bg-card/40 shadow-soft group-hover:shadow-glow">
                     <Upload className="h-5 w-5" />
                   </div>
                   <div>
@@ -411,116 +340,6 @@ export default function DetectionPage() {
                     {isLoading ? "Analyzing..." : "Analyze"}
                   </Button>
                 </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="audio" className="mt-5">
-              <div className="surface-card rounded-xl p-4 md:p-5">
-                <PanelHeader title="Audio Analysis" desc="Upload an audio file to transcribe on the backend and analyze for suspicious segments." />
-
-                <label className="scan-grid mt-4 group relative flex min-h-[15rem] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-dashed bg-background/30 p-6 text-center shadow-soft transition hover:border-primary/30 hover:bg-background/45">
-                  <input type="file" accept="audio/*" className="sr-only" onChange={(e) => onPickAudio(e.target.files?.[0] ?? null)} />
-                  <div className="pulse-glow inline-flex h-12 w-12 items-center justify-center rounded-md border bg-card/40 shadow-soft group-hover:shadow-glow">
-                    <Upload className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium">Drag & drop your file here</div>
-                    <div className="mt-1 text-sm text-muted-foreground">or click to browse</div>
-                  </div>
-
-                  {audioPreviewUrl ? (
-                    <div className="mt-4 w-full overflow-hidden rounded-lg border bg-background/30">
-                      <audio
-                        src={audioPreviewUrl}
-                        controls
-                        className="w-full"
-                        onLoadedMetadata={(e) => {
-                          const duration = e.currentTarget.duration;
-                          if (Number.isFinite(duration)) setAudioDurationSec(duration);
-                        }}
-                      />
-                    </div>
-                  ) : null}
-                </label>
-
-                {transcript?.text ? (
-          <div className="mt-4 glass-panel rounded-xl p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="font-display text-sm">Transcript (preview)</div>
-                      <div className="text-xs text-muted-foreground">{transcript.words?.length ? `${transcript.words.length} words` : ""}</div>
-                    </div>
-                    <p className="mt-2 line-clamp-4 text-sm text-muted-foreground">{transcript.text}</p>
-                  </div>
-                ) : null}
-
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <div className="text-xs text-muted-foreground">
-                    {progressText ? progressText : audioDurationSec ? `Duration: ${formatTime(audioDurationSec)}` : "Tip: clear speech yields better transcripts."}
-                  </div>
-                  <Button variant="hero" disabled={!canScan || isLoading} onClick={scan}>
-                    {isLoading ? "Analyzing..." : "Analyze"}
-                  </Button>
-                </div>
-
-                {audioResult ? (
-                  <div className="mt-6 glass-panel rounded-lg p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="min-w-[14rem] flex-1">
-                        <div className="flex items-center gap-2 font-display text-lg">
-                          <ShieldCheck className="h-5 w-5" />
-                          <span>{verdictLabel(audioResult.verdict)}</span>
-                        </div>
-                        <p className="mt-1 text-sm text-muted-foreground">{audioResult.summary}</p>
-
-                        <div className="mt-3">
-                          <ReportDownloads
-                            payload={{
-                              app: "TruthShield",
-                              version: 1,
-                              generated_at: new Date().toISOString(),
-                              mode: "audio",
-                              input: {
-                                media: {
-                                  file_name: audioFile?.name,
-                                  mime_type: audioFile?.type,
-                                  size_bytes: audioFile?.size,
-                                  duration_sec: audioDurationSec || undefined,
-                                },
-                              },
-                              transcript: transcript?.text
-                                ? {
-                                    text: transcript.text,
-                                    words_count: transcript.words?.length,
-                                    audio_events_count: transcript.audio_events?.length,
-                                  }
-                                : undefined,
-                              result: audioResult,
-                            }}
-                            fileStem={audioFile?.name ?? "audio"}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 rounded-md border bg-secondary/40 px-3 py-2 text-right">
-                        <div className="text-xs text-muted-foreground">Confidence</div>
-                        <div className="font-display text-xl">{Math.round(clamp01(audioResult.confidence) * 100)}%</div>
-                      </div>
-                    </div>
-
-                    {audioDurationSec ? <SegmentTimeline durationSec={audioDurationSec} segments={audioResult.segments} /> : null}
-
-                    {audioResult.recommended_next_steps?.length ? (
-                      <div className="mt-5 rounded-md border bg-background/20 p-3">
-                        <div className="text-sm font-medium">Recommended next steps</div>
-                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                          {audioResult.recommended_next_steps.map((step, idx) => (
-                            <li key={`${step}-${idx}`}>{step}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
               </div>
             </TabsContent>
 
@@ -552,6 +371,7 @@ export default function DetectionPage() {
           {result ? (
             <ResultBlock
               result={result}
+              mode={tab}
               report={{
                 app: "TruthShield",
                 version: 1,
