@@ -1,31 +1,51 @@
-# TruthShield AI
+<div align="center">
 
-TruthShield AI is a media authenticity verification console for detecting AI-generated images and AI-generated text with local machine-learning models. It combines a cinematic React dashboard with a FastAPI inference backend, report exports, training visuals, and analyst-friendly evidence signals.
+# 🛡️ TruthShield AI
+### Media Authenticity Verification Console
+
+Detecting AI-generated images and AI-generated text with local machine-learning models — combining a cinematic React dashboard with a FastAPI inference backend, report exports, training visuals, and analyst-friendly evidence signals.
+
+[![React](https://img.shields.io/badge/React-TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-ML-EE4C2C?style=for-the-badge&logo=pytorch)](https://pytorch.org/)
+[![RoBERTa](https://img.shields.io/badge/Text_Model-RoBERTa-ff6f00?style=for-the-badge)](https://huggingface.co/docs/transformers/model_doc/roberta)
+
+</div>
+
+---
+
+## 🧭 Overview
 
 The system is designed as a major-project style prototype: it does not claim perfect proof, but gives calibrated risk signals that help a human reviewer decide what to inspect next.
 
-## Features
+---
 
-- Image AIGC detection using a locally trained EfficientNet-B0 model.
-- Text AI-generation detection using a locally trained RoBERTa model.
-- Hybrid text scoring that blends ML probability with writing-pattern signals.
-- Downloadable JSON, HTML, and PDF-style reports.
-- Training result visuals for the image and text models.
-- Incident library and training modules for awareness/education.
-- Dark cinematic dashboard UI built for repeated analyst work.
+## ✨ Features
 
-## Tech Stack
+- 🖼️ Image AIGC detection using a locally trained EfficientNet-B0 model.
+- ✍️ Text AI-generation detection using a locally trained RoBERTa model.
+- 🧬 Hybrid text scoring that blends ML probability with writing-pattern signals.
+- 📄 Downloadable JSON, HTML, and PDF-style reports.
+- 📊 Training result visuals for the image and text models.
+- 📚 Incident library and training modules for awareness/education.
+- 🌘 Dark cinematic dashboard UI built for repeated analyst work.
 
-- Frontend: React, TypeScript, Vite
-- Styling: Tailwind CSS, shadcn/ui, Radix UI
-- Icons: lucide-react
-- Backend: FastAPI, Uvicorn
-- ML: PyTorch, torchvision, Hugging Face Transformers
-- Models:
-  - EfficientNet-B0 for image classification
-  - RoBERTa for text classification
+---
 
-## Project Structure
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+| --- | --- |
+| Frontend | React, TypeScript, Vite |
+| Styling | Tailwind CSS, shadcn/ui, Radix UI |
+| Icons | lucide-react |
+| Backend | FastAPI, Uvicorn |
+| ML | PyTorch, torchvision, Hugging Face Transformers |
+| Models | EfficientNet-B0 (image classification), RoBERTa (text classification) |
+
+---
+
+## 📁 Project Structure
 
 ```txt
 .
@@ -52,59 +72,51 @@ The system is designed as a major-project style prototype: it does not claim per
 `-- package.json
 ```
 
-Note: model weights are intentionally ignored by `.gitignore` because they are large binary artifacts. Keep them locally under `ML/` when running the full app.
+> **Note:** model weights are intentionally ignored by `.gitignore` because they are large binary artifacts. Keep them locally under `ML/` when running the full app.
 
-## Model Summary
+---
 
-### Image Detector
+## 🧠 Model Summary
 
-- Architecture: EfficientNet-B0
-- Task: real image vs AI-generated image
-- Reported validation accuracy: 92.8%
-- Default model path:
+### 🖼️ Image Detector
 
-```txt
-ML/truthshield_aigc_efficientnet_b0_final.pth
-```
+| Property | Value |
+| --- | --- |
+| Architecture | EfficientNet-B0 |
+| Task | Real image vs. AI-generated image |
+| Validation accuracy | **92.8%** |
+| Default model path | `ML/truthshield_aigc_efficientnet_b0_final.pth` |
+| Class order | `real,fake` |
 
-- Default class order:
+### ✍️ Text Detector
 
-```txt
-real,fake
-```
+| Property | Value |
+| --- | --- |
+| Architecture | RoBERTa base |
+| Dataset family | M4 machine-generated text detection dataset |
+| Task | Human-written text vs. AI-generated text |
+| Validation F1 | **96.9%** |
+| Default model path | `ML/text/truthshield_text_roberta_m4` |
+| Class order | `human,ai` |
 
-### Text Detector
+> The text detector also calculates writing-pattern signals such as lexical diversity, sentence variation, repetition, and length reliability. This helps avoid blindly trusting the classifier on short or casual text.
 
-- Architecture: RoBERTa base
-- Dataset family: M4 machine-generated text detection dataset
-- Task: human-written text vs AI-generated text
-- Reported validation F1: 96.9%
-- Default model path:
+---
 
-```txt
-ML/text/truthshield_text_roberta_m4
-```
+## ✅ Prerequisites
 
-- Default class order:
+| Requirement | Notes |
+| --- | --- |
+| Node.js | 18+ |
+| npm | — |
+| Python | 3.10+ recommended |
+| pip | — |
 
-```txt
-human,ai
-```
+> On Windows, PowerShell is recommended for the commands below.
 
-The text detector also calculates writing-pattern signals such as lexical diversity, sentence variation, repetition, and length reliability. This helps avoid blindly trusting the classifier on short or casual text.
+---
 
-## Prerequisites
-
-Install:
-
-- Node.js 18+
-- npm
-- Python 3.10+ recommended
-- pip
-
-On Windows, PowerShell is recommended for the commands below.
-
-## Frontend Setup
+## 🎨 Frontend Setup
 
 Install JavaScript dependencies:
 
@@ -130,7 +142,9 @@ Open the detection page:
 http://127.0.0.1:8080/detection
 ```
 
-## Backend Setup
+---
+
+## ⚙️ Backend Setup
 
 Install Python dependencies:
 
@@ -162,17 +176,19 @@ Health check:
 http://127.0.0.1:8010/health
 ```
 
-## Running The Full App
+---
+
+## 🚀 Running The Full App
 
 Use two terminals.
 
-Terminal 1:
+**Terminal 1**
 
 ```bash
 npm run ml:dev
 ```
 
-Terminal 2:
+**Terminal 2**
 
 ```bash
 npm run dev
@@ -184,7 +200,9 @@ Then open:
 http://127.0.0.1:8080/detection
 ```
 
-## API Endpoints
+---
+
+## 🔌 API Endpoints
 
 ### Health
 
@@ -206,7 +224,7 @@ Form-data:
 file=<image file>
 ```
 
-Returns:
+**Returns:**
 
 - verdict
 - confidence
@@ -228,7 +246,7 @@ JSON body:
 }
 ```
 
-Returns:
+**Returns:**
 
 - verdict
 - confidence
@@ -237,7 +255,9 @@ Returns:
 - hybrid calibration signal
 - recommended next steps
 
-## Environment Variables
+---
+
+## 🔧 Environment Variables
 
 Optional backend overrides:
 
@@ -259,7 +279,9 @@ Frontend override for the local ML backend:
 VITE_IMAGE_DETECTOR_URL=http://127.0.0.1:8010
 ```
 
-## Build
+---
+
+## 📦 Build
 
 Create a production build:
 
@@ -273,16 +295,20 @@ Preview the build:
 npm run preview
 ```
 
-## Important Limitations
+---
 
-TruthShield should be used as a review aid, not as final proof.
+## ⚠️ Important Limitations
+
+> TruthShield should be used as a review aid, not as final proof.
 
 - AI image detectors can fail on screenshots, compression, edits, crops, or images outside the training distribution.
 - AI text detectors are inherently difficult and can be confused by short text, polished human writing, paraphrasing, translation, or grammar correction.
 - Confidence is probabilistic, not legal or forensic certainty.
 - Reports should be paired with source checks, metadata checks, and human review.
 
-## Git And Security Notes
+---
+
+## 🔒 Git And Security Notes
 
 The repository ignores:
 
@@ -293,9 +319,11 @@ The repository ignores:
 - large media files
 - build outputs
 
-If a secret or large model file was committed before being added to `.gitignore`, remove it from git history separately. `.gitignore` only prevents future tracking.
+> If a secret or large model file was committed before being added to `.gitignore`, remove it from git history separately. `.gitignore` only prevents future tracking.
 
-## Suggested Demo Flow
+---
+
+## 🎬 Suggested Demo Flow
 
 1. Start backend with `npm run ml:dev`.
 2. Start frontend with `npm run dev`.
@@ -305,6 +333,16 @@ If a secret or large model file was committed before being added to `.gitignore`
 6. Export the report as JSON or HTML.
 7. Show the training curves on the dashboard.
 
-## Project Status
+---
+
+## 📌 Project Status
 
 This is an academic/major-project prototype focused on local ML integration, explainable detection signals, and a polished analyst dashboard experience.
+
+---
+
+<div align="center">
+
+Built to make media verification explainable, one signal at a time. 🛡️
+
+</div>
